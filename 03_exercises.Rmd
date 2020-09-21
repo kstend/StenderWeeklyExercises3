@@ -82,18 +82,26 @@ These exercises will reiterate what you learned in the "Expanding the data wrang
 
 ```{r}
 garden_harvest%>%
- pivot_wider(id_cols = species:obs,
-              names_from = measurement,
-              values_from = value)%>%
-  group_by(vegetable, date)%>%
-  summarize(total_weight_lbs = sum(weight)/454)
+  mutate(day_of_week = wday(date))%>%
+  group_by(vegetable, day_of_week)%>%
+  summarise(total_weight_lbs = sum(weight)/454)
+
+  
 ```
 
   2. Summarize the `garden_harvest` data to find the total harvest in pound for each vegetable variety and then try adding the `plot` variable from the `plant_date_loc` table. This will not turn out perfectly. What is the problem? How might you fix it?
 
 ```{r}
+garden_harvest%>%
+  group_by(vegetable)%>%
+  summarise(total_weight_lbs = sum(weight)/454)%>%
+  left_join(plant_date_loc,
+            by = "vegetable")
+  
 
 ```
+
+The total weight does not vary by plot. For example, with peas, there are Super Sugar Snap and Magnolia Blossom peas. Sugar Snaps were planted in A, Magnolia Blossoms in B. Before joining the two datasets, peas have a total harvest weight of 17.01 pounds. After joining, both Sugar Snap and Magnolia Blossom peas have a total wait of 17.01 pounds each- we don't know how much came from plot A or plot B. This could be fixed if we summarized by variety instead of by vegetable. 
 
   3. I would like to understand how much money I "saved" by gardening, for each vegetable type. Describe how I could use the `garden_harvest` and `supply_cost` datasets, along with data from somewhere like [this](https://products.wholefoodsmarket.com/search?sort=relevance&store=10542) to answer this question. You can answer this in words, referencing various join functions. You don't need R code but could provide some if it's helpful.
 
@@ -241,6 +249,6 @@ This problem uses the data from the Tidy Tuesday competition this week, `kids`. 
 
   21. In this exercise, you are going to try to replicate the graph below, created by Georgios Karamanis. I'm sure you can find the exact code on GitHub somewhere, but **DON'T DO THAT!** You will only be graded for putting an effort into this problem. So, give it a try and see how far you can get without doing too much googling. HINT: use `facet_geo()`. The graphic won't load below since it came from a location on my computer. So, you'll have to reference the original html on the moodle page to see it.
   
-![](kids_data_karamanis.jpeg)
+
 
 **DID YOU REMEMBER TO UNCOMMENT THE OPTIONS AT THE TOP?**
