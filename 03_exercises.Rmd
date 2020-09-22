@@ -105,21 +105,41 @@ The total weight does not vary by plot. For example, with peas, there are Super 
 
   3. I would like to understand how much money I "saved" by gardening, for each vegetable type. Describe how I could use the `garden_harvest` and `supply_cost` datasets, along with data from somewhere like [this](https://products.wholefoodsmarket.com/search?sort=relevance&store=10542) to answer this question. You can answer this in words, referencing various join functions. You don't need R code but could provide some if it's helpful.
 
+I would join the garden harvest and supply cost datasets. 
+
   4. Subset the data to tomatoes. Reorder the tomato varieties from smallest to largest first harvest date. Create a barplot of total harvest in pounds for each variety, in the new order.
 
 ```{r}
-
+garden_harvest%>%
+  filter(vegetable == "tomatoes")%>%
+  mutate(variety2 = fct_reorder(variety, date))%>%
+  group_by(variety2)%>%
+  summarise(total_weight_lbs = sum(weight)/454)%>%
+  ggplot(aes(y = variety2, x=total_weight_lbs))+
+  geom_col()
 ```
 
   5. In the `garden_harvest` data, create two new variables: one that makes the varieties lowercase and another that finds the length of the variety name. Arrange the data by vegetable and length of variety name (smallest to largest), with one row for each vegetable variety. HINT: use `str_to_lower()`, `str_length()`, and `distinct()`.
   
 ```{r}
+garden_harvest%>%
+  mutate(lower_variety = str_to_lower(variety),
+         length_variety = str_length(lower_variety))%>%
+  group_by(variety)%>%
+  mutate(length2 = fct_reorder(vegetable, length_variety))%>%
+  summarize(string_length = length2, variety = variety)
+
 
 ```
 
   6. In the `garden_harvest` data, find all distinct vegetable varieties that have "er" or "ar" in their name. HINT: `str_detect()` with an "or" statement (use the | for "or") and `distinct()`.
 
 ```{r}
+garden_harvest%>%
+  mutate(lower_variety = str_to_lower(variety),
+         has_er = str_detect(lower_variety, "er"),
+         has_ar = str_detect(lower_variety, "ar"))%>%
+  filter(has_er == "TRUE" | has_ar == "TRUE")
 
 ```
 
@@ -160,8 +180,12 @@ It's natural to expect that bikes are rented more at some times of day, some day
   7. A density plot, which is a smoothed out histogram, of the events versus `sdate`. Use `geom_density()`.
   
 ```{r}
+ggplot(data = Trips, aes(x = sdate))+
+  geom_density()
 
 ```
+  
+  It looks like more events happen in the October-November timeframe than in Novemeber-December or in December-January. 
   
   8. A density plot of the events versus time of day.  You can use `mutate()` with `lubridate`'s  `hour()` and `minute()` functions to extract the hour of the day and minute within the hour from `sdate`. Hint: A minute is 1/60 of an hour, so create a variable where 3:30 is 3.5 and 3:45 is 3.75.
   
