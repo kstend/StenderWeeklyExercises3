@@ -12,7 +12,7 @@ output:
 
 
 ```{r setup, include=FALSE}
-#knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = TRUE, error=TRUE, message=FALSE, warning=FALSE)
 ```
 
 ```{r libraries}
@@ -109,7 +109,20 @@ The total weight does not vary by plot. For example, with peas, there are Super 
 
   3. I would like to understand how much money I "saved" by gardening, for each vegetable type. Describe how I could use the `garden_harvest` and `supply_cost` datasets, along with data from somewhere like [this](https://products.wholefoodsmarket.com/search?sort=relevance&store=10542) to answer this question. You can answer this in words, referencing various join functions. You don't need R code but could provide some if it's helpful.
 
-I would join the garden harvest and supply cost datasets. 
+I would start by creating a new dataset with the Whole Foods prices for each vegetable, by weight (if applicable). I would join this dataset with the supply costs dataset, calling it vegetable costs. Then, I would join this dataset with the garden harvest dataset. I would make a new variable that would track the total weight harvested by vegetable. Then, I would summarize the price saved by vegetable: Whole Foods price*pounds harvested-sum(seed price per vegetable). Generally, I think my code would look like:
+
+veg_costs<-
+supply_costs%>%
+  left_join(Whole_Foods,
+            by = "vegetable")
+            
+garden_harvest%>%
+  left_join(veg_costs,
+            by = "vegetable")%>%
+            group_by(vegetable)%>%
+            mutate(total_weight_lbs = sum(weight)/454,
+                  total_seeds = sum(price))%>%
+            summarize(total_saved = wholefoodsprice*total_weight_lbs - total_seeds)
 
   4. Subset the data to tomatoes. Reorder the tomato varieties from smallest to largest first harvest date. Create a barplot of total harvest in pounds for each variety, in the new order.
 
@@ -120,7 +133,8 @@ garden_harvest%>%
   group_by(variety2)%>%
   summarise(total_weight_lbs = sum(weight)/454)%>%
   ggplot(aes(y = variety2, x=total_weight_lbs))+
-  geom_col()
+  geom_col()+
+  labs(title = "Tomato varieties by size of first harvest date", x = "weight of first harvest", y = "variety")
 ```
 
   5. In the `garden_harvest` data, create two new variables: one that makes the varieties lowercase and another that finds the length of the variety name. Arrange the data by vegetable and length of variety name (smallest to largest), with one row for each vegetable variety. HINT: use `str_to_lower()`, `str_length()`, and `distinct()`.
@@ -188,7 +202,7 @@ ggplot(data = Trips, aes(x = sdate))+
 
 ```
   
-  It looks like more events happen in the October-November timeframe than in November-December or in December-January. 
+More events start in October than in November or December, and more events start in November than in December. By month, events seem to happen most at the very beginning, in the very middle, and at the very end of the month- each month alone seems to be trimodal. 
   
   8. A density plot of the events versus time of day.  You can use `mutate()` with `lubridate`'s  `hour()` and `minute()` functions to extract the hour of the day and minute within the hour from `sdate`. Hint: A minute is 1/60 of an hour, so create a variable where 3:30 is 3.5 and 3:45 is 3.75.
   
@@ -204,6 +218,8 @@ Trips%>%
 
 ```
   
+  This distribution looks bimodal, with maximums at 8:00 and 18:00. It is most common for trips to start fairly early in the morning or in the early evening, about the time one might need to rent a bike to go to work and the time one might need to rent a bike to return home from work.
+  
   9. A bar graph of the events versus day of the week. Put day on the y-axis.
   
 ```{r}
@@ -214,6 +230,8 @@ Trips%>%
   labs(title = "Number of events by day of week", x = "number of events", y = "day of week")
 
 ```
+  
+This graph confirmed my suspicions about commuter rentals, as it shows weekdays (M-F) having the highest counts for events when compared to weekends (Saturday and Sunday). If the rentals were more for leisure, I would assume most of the rentals would occur on weekend days. 
   
   10. Facet your graph from exercise 8. by day of the week. Is there a pattern?
   
@@ -230,7 +248,7 @@ Trips%>%
   
 ```
 
-On weekdays (Monday-Friday) the event starting time distribution is bimodal. On weekends (Saturday and Sunday) the distribution is normal.
+On weekdays (Monday-Friday) the event starting time distribution is bimodal, with modes at about 8:00 and 17:30. On weekends (Saturday and Sunday) the distribution is normal, with a mean start time of about 13:00. This makes sense- weekdays chart bike commuter rent times, weekends track leisurely fun bike rentals. 
   
 The variable `client` describes whether the renter is a regular user (level `Registered`) or has not joined the bike-rental organization (`Causal`). The next set of exercises investigate whether these two different categories of users show different rental behavior and how `client` interacts with the patterns you found in the previous exercises. Repeat the graphic from Exercise \@ref(exr:exr-temp) (d) with the following changes:
 
@@ -249,6 +267,8 @@ Trips%>%
 
 ```
 
+From this graph, we can see that the commuter vs leisure rental hypothesis holds up. On weekend days, both registered and unregistered users tend to rent bikes between 10:00 and 17:00, peak times for more leisurely activities. On weekdays, registered users rent around morning and evening commute times, while casual renters still rent during more "leisurely" times. 
+
   12. Change the previous graph by adding the argument `position = position_stack()` to `geom_density()`. In your opinion, is this better or worse in terms of telling a story? What are the advantages/disadvantages of each?
   
 ```{r}
@@ -262,6 +282,8 @@ Trips%>%
   facet_wrap(vars(day_of_week))+
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
+  
+  Personally, I do not enjoy this graph as much. At first glance, because casual and registered clients are stacked, it looks like there both casual users and registered users follow a bimodal trend on weekdays. From the previous graph I know this is not true, but at first glance that can be quite confusing. This does show there are many more registered users than casual users in the morning commute times, but the way it is presented isn't as clear in my opinion. 
   
   13. Add a new variable to the dataset called `weekend` which will be "weekend" if the day is Saturday or Sunday and  "weekday" otherwise (HINT: use the `ifelse()` function and the `wday()` function from `lubridate`). Then, update the graph from the previous problem by faceting on the new `weekend` variable. 
   
@@ -278,6 +300,8 @@ Trips%>%
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
   
+  This graph is a good visual representation of the weekend/weekday leisure/commute differences. On weekdays, the registered distribution is bimodal, centered at about 8:00 and 18:00. On weekends, the registered distribution is normal, centered at about 13:00. For casual users, weekends and weekdays are both normal and centered at 15:00. 
+  
   14. Change the graph from the previous problem to facet on `client` and fill with `weekday`. What information does this graph tell you that the previous didn't? Is one graph better than the other?
   
 ```{r}
@@ -293,6 +317,8 @@ Trips%>%
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
   
+This graph reinforces observations I made in the previous graph. On weekdays, the registered distribution is bimodal, centered at about 8:00 and 18:00. On weekends, the registered distribution is normal, centered at about 13:00. For casual users, weekends and weekdays are both normal and centered at 15:00. This graph allows the difference between casual (leisurely) use and registered (commuter) use to be seen more clearly.
+
 ### Spatial patterns
 
   15. Use the latitude and longitude variables in `Stations` to make a visualization of the total number of departures from each station in the `Trips` data. Use either color or size to show the variation in number of departures. We will improve this plot next week when we learn about maps!
@@ -301,8 +327,15 @@ Trips%>%
 Stations%>%
   mutate(sstation = name)%>%
   left_join(Trips,
-            by = "sstation")
+            by = "sstation")%>%
+  group_by(name, lat, long)%>%
+  count()%>%
+  ggplot(aes(x=long, y=lat, size = n))+
+  geom_point(alpha = .5)+
+  labs(title = "Number of departures from each rental location", x = "longitude", y= "latitude")
 ```
+  
+  There is a much higher number of departures at around 38.9 latitude by -77.025 longitude. There must be a popular station in this area. 
   
   16. Only 14.4% of the trips in our data are carried out by casual users. Create a plot that shows which area(s) have stations with a much higher percentage of departures by casual users. What patterns do you notice? (Again, we'll improve this next week when we learn about maps).
   
@@ -317,6 +350,8 @@ Stations%>%
   labs(title = "Percent of sasual departures from each rental location", x = "longitude", y= "latitude")
   
 ```
+  
+  From the previous graph, it looked like there was a popular station at around 38.9 latitude by -77.025 longitude. This matches pretty well with the location of stations with the highest percentage of casual rentals. Maybe there is a popular tourist site around here that attracts bike renters? 
   
 ### Spatiotemporal patterns
 
