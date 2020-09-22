@@ -243,7 +243,7 @@ Trips%>%
          totaltime = hour_num + minute_dec,
          day_of_week = wday(sdate, label = TRUE))%>%
   ggplot(aes(x=totaltime, fill = client))+
-  geom_density()+
+  geom_density(alpha = .5, color = "NA")+
   facet_wrap(vars(day_of_week))+
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 
@@ -258,7 +258,7 @@ Trips%>%
          totaltime = hour_num + minute_dec,
          day_of_week = wday(sdate, label = TRUE))%>%
   ggplot(aes(x=totaltime, fill = client))+
-  geom_density(position = position_stack())+
+  geom_density(position = position_stack(), alpha = .5, color = "NA")+
   facet_wrap(vars(day_of_week))+
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
@@ -273,7 +273,7 @@ Trips%>%
          day_of_week = wday(sdate, label = TRUE),
          weekend = ifelse(day_of_week == "Sat" | day_of_week == "Sun", "weekend", "weekday"))%>%
   ggplot(aes(x=totaltime, fill = client))+
-  geom_density(position = position_stack())+
+  geom_density(alpha = .5, color = "NA")+
   facet_wrap(vars(weekend))+
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
@@ -288,7 +288,7 @@ Trips%>%
          day_of_week = wday(sdate, label = TRUE),
          weekend = ifelse(day_of_week == "Sat" | day_of_week == "Sun", "weekend", "weekday"))%>%
   ggplot(aes(x=totaltime, fill = weekend))+
-  geom_density(position = position_stack())+
+  geom_density(alpha = .5, color = "NA")+
   facet_wrap(vars(client))+
   labs(title = "Density of events by time of day", x = "time of day", y = "density")
 ```
@@ -351,8 +351,11 @@ Trips%>%
              by = c("sstation", "tripdate"))%>%
   mutate(day_of_week = wday(sdate, label = TRUE))%>%
   group_by(client, day_of_week)%>%
-  mutate(casual_percent = mean(client == "Casual"))
-  
+  summarize(number = n())%>%
+  mutate(prop = number/sum(number))%>%
+  pivot_wider(id_cols = day_of_week,
+              names_from = client,
+              values_from = prop)
 ```
 
 **DID YOU REMEMBER TO GO BACK AND CHANGE THIS SET OF EXERCISES TO THE LARGER DATASET? IF NOT, DO THAT NOW.**
@@ -367,7 +370,7 @@ This problem uses the data from the Tidy Tuesday competition this week, `kids`. 
 
   21. In this exercise, you are going to try to replicate the graph below, created by Georgios Karamanis. I'm sure you can find the exact code on GitHub somewhere, but **DON'T DO THAT!** You will only be graded for putting an effort into this problem. So, give it a try and see how far you can get without doing too much googling. HINT: use `facet_geo()`. The graphic won't load below since it came from a location on my computer. So, you'll have to reference the original html on the moodle page to see it.
   
-```{r, fig.height=15, fig.width=15}
+```{r, fig.height=10, fig.width=15}
 kids%>%
   group_by(state,year)%>%
   filter(variable == "lib")%>%
